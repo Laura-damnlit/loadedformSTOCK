@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台股每日學習</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0c0d10; --surface:#13151b; --surface2:#1a1d26; --border:#252832;
+    --gold:#c8a84b; --gold-dim:#7a6328; --red:#d95f5f; --green:#4daa80;
+    --blue:#5a8ce0; --purple:#9b72d4; --orange:#d4894a; --teal:#3db8a8;
+    --text:#eae6db; --text-dim:#6b6860; --text-mid:#a09c94;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Serif TC',serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 85% 5%,rgba(200,168,75,.05) 0%,transparent 55%),radial-gradient(ellipse 50% 70% at 5% 90%,rgba(90,140,224,.04) 0%,transparent 55%);pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .container{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:36px 20px 72px;}
+
+  /* HEADER */
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;}
+  .brand{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;opacity:.8;}
+  .date-display{font-size:30px;font-weight:900;color:var(--text);line-height:1;}
+  .streak-badge{display:flex;flex-direction:column;align-items:center;background:linear-gradient(160deg,#1c1808,#251e08);border:1px solid var(--gold-dim);border-radius:14px;padding:10px 16px;min-width:80px;}
+  .streak-fire{font-size:20px;margin-bottom:2px;}
+  .streak-num{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--gold);line-height:1;}
+  .streak-label{font-size:9px;letter-spacing:.12em;color:var(--gold-dim);margin-top:2px;font-family:'DM Mono',monospace;}
+
+  /* PROGRESS */
+  .progress-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+  .progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .progress-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--text-dim);}
+  .progress-count{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold);}
+  .progress-track{height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:99px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+  /* TOP BAR */
+  .top-bar{display:flex;gap:10px;margin-bottom:28px;}
+  .btn-main{flex:1;background:linear-gradient(135deg,#c8a84b,#a8862e);color:#080600;border:none;border-radius:12px;padding:14px 20px;font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.04em;box-shadow:0 4px 20px rgba(200,168,75,.2);}
+  .btn-main:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(200,168,75,.3);}
+  .btn-main:active{transform:translateY(0);}
+  .btn-icon{background:var(--surface);border:1px solid var(--border);color:var(--text-mid);border-radius:12px;padding:14px 15px;font-size:17px;cursor:pointer;transition:all .2s;}
+  .btn-icon:hover{border-color:var(--gold-dim);color:var(--gold);background:var(--surface2);}
+
+  /* SECTION LABEL */
+  .section-label{display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:14px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* CARDS */
+  .cards{display:flex;flex-direction:column;gap:11px;margin-bottom:32px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .2s,box-shadow .2s;animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;}
+  .card:nth-child(1){animation-delay:.03s}.card:nth-child(2){animation-delay:.08s}.card:nth-child(3){animation-delay:.13s}.card:nth-child(4){animation-delay:.18s}.card:nth-child(5){animation-delay:.23s}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .card:hover{border-color:var(--gold-dim);box-shadow:0 0 0 1px rgba(200,168,75,.06),0 8px 24px rgba(0,0,0,.3);}
+  .card-header{display:flex;align-items:center;gap:10px;padding:15px 16px 13px;cursor:pointer;user-select:none;}
+  .card-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold-dim);min-width:18px;font-style:italic;}
+  .cat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .card-tags{display:flex;gap:5px;flex-shrink:0;}
+  .tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.06em;padding:3px 7px;border-radius:5px;font-weight:500;}
+  .tag-fundamental{background:rgba(77,170,128,.14);color:#4daa80;}
+  .tag-technical{background:rgba(90,140,224,.14);color:#5a8ce0;}
+  .tag-chips{background:rgba(155,114,212,.14);color:#9b72d4;}
+  .tag-mindset{background:rgba(217,95,95,.14);color:#d95f5f;}
+  .tag-twstock{background:rgba(212,137,74,.14);color:#d4894a;}
+  .tag-tactics{background:rgba(61,184,168,.14);color:#3db8a8;}
+  .tag-beginner{background:rgba(77,170,128,.1);color:#4daa80;}
+  .tag-advanced{background:rgba(200,168,75,.12);color:var(--gold);}
+  .card-title{flex:1;font-size:14px;font-weight:600;line-height:1.4;color:var(--text);}
+  .card-right{display:flex;gap:5px;align-items:center;flex-shrink:0;}
+  .btn-save{background:none;border:none;font-size:14px;cursor:pointer;opacity:.3;transition:opacity .2s,transform .15s;padding:4px;line-height:1;}
+  .btn-save:hover{opacity:1;transform:scale(1.2);}
+  .btn-save.saved{opacity:1;}
+  .chevron{color:var(--text-dim);font-size:11px;transition:transform .25s;line-height:1;}
+  .card.open .chevron{transform:rotate(180deg);}
+  .card-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border);}
+  .card.open .card-body{display:block;}
+  .card-summary{font-size:13px;line-height:1.9;color:var(--text-mid);padding:13px 0 11px;}
+  .action-tip{background:var(--surface2);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:9px 13px;font-size:13px;color:var(--text-mid);line-height:1.65;}
+  .action-tip strong{display:block;font-size:9px;letter-spacing:.14em;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:4px;}
+
+  /* RESET NOTICE */
+  .reset-notice{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:12px;padding:14px 16px;margin-bottom:28px;font-size:13px;color:var(--text-mid);line-height:1.65;}
+  .reset-notice strong{color:var(--green);}
+
+  /* GLOSSARY */
+  .glossary-wrap{margin-bottom:32px;}
+  .glossary-search-bar{display:flex;gap:8px;margin-bottom:12px;}
+  .glossary-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Noto Serif TC',serif;font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
+  .glossary-input::placeholder{color:var(--text-dim);}
+  .glossary-input:focus{border-color:var(--gold-dim);}
+  .glossary-results{display:flex;flex-direction:column;gap:8px;}
+  .glossary-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;animation:fadeUp .3s ease;}
+  .glossary-term{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:5px;}
+  .glossary-def{font-size:12.5px;line-height:1.75;color:var(--text-mid);}
+  .glossary-empty{text-align:center;padding:20px;color:var(--text-dim);font-size:13px;}
+  .glossary-hint{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;letter-spacing:.05em;text-align:center;padding:8px 0;}
+
+  /* NOTES */
+  .notes-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;animation:fadeUp .3s ease;}
+  .notes-panel.open{display:block;}
+  .notes-title{font-size:10px;letter-spacing:.2em;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:12px;}
+  .note-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+  .note-item:last-child{border-bottom:none;}
+  .note-dot{width:5px;height:5px;border-radius:50%;margin-top:7px;flex-shrink:0;}
+  .note-content{flex:1;}
+  .note-text{font-size:12.5px;line-height:1.6;color:var(--text-mid);}
+  .note-meta{display:flex;align-items:center;justify-content:space-between;margin-top:3px;}
+  .note-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);}
+  .btn-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 4px;transition:color .2s;}
+  .btn-del:hover{color:var(--red);}
+  .empty-notes{text-align:center;padding:16px;color:var(--text-dim);font-size:13px;line-height:1.7;}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-dim);}
+  .empty-icon{font-size:36px;margin-bottom:12px;opacity:.45;}
+  .empty-text{font-size:13px;line-height:1.85;}
+
+  footer{text-align:center;margin-top:48px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.12em;opacity:.5;}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <div class="brand">台股每日學習</div>
+      <div class="date-display" id="dateDisplay"></div>
+    </div>
+    <div class="streak-badge">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label">連續天數</div>
+    </div>
+  </header>
+
+  <!-- 進度條 -->
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label">學習進度</span>
+      <span class="progress-count" id="progressCount">0 / 0</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="top-bar">
+    <button class="btn-main" id="btnDraw" onclick="drawCards()">取得今日五大要點</button>
+    <button class="btn-icon" onclick="toggleNotes()" title="筆記">📌</button>
+  </div>
+
+  <div class="notes-panel" id="notesPanel">
+    <div class="notes-title">📌 MY SAVED NOTES</div>
+    <div id="notesList"></div>
+  </div>
+
+  <div class="section-label">💡 今日學習要點</div>
+  <div id="resetNotice" style="display:none" class="reset-notice">
+    <strong>🎉 恭喜！</strong> 你已經看完所有學習要點，題庫已重置，重新開始新一輪學習！
+  </div>
+  <div class="cards" id="cardsContainer">
+    <div class="empty-state">
+      <div class="empty-icon">📈</div>
+      <div class="empty-text">按下按鈕，每天隨機抽出五個學習要點<br>看過的不會重複，直到全部學完</div>
+    </div>
+  </div>
+
+  <!-- 詞彙快查 -->
+  <div class="glossary-wrap">
+    <div class="section-label">📖 名詞快查</div>
+    <div class="glossary-search-bar">
+      <input class="glossary-input" id="glossaryInput" placeholder="輸入股票名詞，例如：融資、法說會…" oninput="searchGlossary(this.value)">
+    </div>
+    <div class="glossary-hint">輸入任何股票相關名詞即可查詢</div>
+    <div class="glossary-results" id="glossaryResults"></div>
+  </div>
+
+  <footer>TAIWAN STOCK · DAILY LEARNING · BUILD YOUR EDGE</footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// 分類設定
+// ═══════════════════════════════════════
+const CAT_CONFIG = {
+  fundamental:{ label:'基本面',   tagClass:'tag-fundamental', dot:'#4daa80' },
+  technical:  { label:'技術面',   tagClass:'tag-technical',   dot:'#5a8ce0' },
+  chips:      { label:'籌碼面',   tagClass:'tag-chips',       dot:'#9b72d4' },
+  mindset:    { label:'心理策略', tagClass:'tag-mindset',     dot:'#d95f5f' },
+  twstock:    { label:'台股特色', tagClass:'tag-twstock',     dot:'#d4894a' },
+  tactics:    { label:'實戰心法', tagClass:'tag-tactics',     dot:'#3db8a8' },
+};
+
+// ═══════════════════════════════════════
+// 題庫（200+ 條）
+// ═══════════════════════════════════════
+const DB = [
+  // ── 基本面 ──
+  {cat:'fundamental',level:'入門',title:'本益比：這股票貴不貴？',
+   summary:'本益比就是「你花多少錢，買公司每年賺一塊錢的獲利」。舉例：一杯珍奶 70 元，這家店每年幫你賺 7 元，本益比就是 10 倍。本益比越低通常代表股價相對便宜，但要跟同類型公司比較才有意義。',
+   tip:'看一檔股票之前先查本益比，再和同產業的平均值比一比。台積電本益比通常比傳統產業高，因為大家預期它未來會賺更多。'},
+  {cat:'fundamental',level:'入門',title:'殖利率：每年可以領多少股息？',
+   summary:'殖利率 = 股息 ÷ 股價。殖利率 5% 代表你買 10 萬元的股票，每年可以領 5000 元股息，比銀行定存多很多。存股族最在乎這個數字。',
+   tip:'殖利率高不一定好，要確認這家公司是否年年穩定配息。某年突然配很多，可能只是賣了資產，不代表每年都這樣。'},
+  {cat:'fundamental',level:'入門',title:'EPS：公司幫你賺了多少？',
+   summary:'EPS（每股盈餘）就是「你持有一股，公司幫你賺了多少錢」。EPS 5 元代表每股賺了 5 元。EPS 越高、成長越穩定，代表公司越賺錢。財報季（每季）會公布最新數字。',
+   tip:'單看一季 EPS 容易被誤導，最好看「四季加總」，也就是最近一整年的累積，才能看出公司真正的獲利能力。'},
+  {cat:'fundamental',level:'入門',title:'毛利率：賣東西之後剩多少？',
+   summary:'毛利率就是「賣出商品後扣掉生產成本，還剩下幾趴」。賣 100 元的東西，生產成本 60 元，毛利率就是 40%。毛利率越高，代表產品越有競爭力，不容易被砍價。台積電毛利率長期超過 50%，非常強。',
+   tip:'一家公司的毛利率突然下滑要注意，可能是原物料漲價或競爭加劇，都是基本面惡化的警訊。'},
+  {cat:'fundamental',level:'入門',title:'股息再投入：讓錢幫你生錢',
+   summary:'每年領到的股息再拿去買同一檔股票，持股數量就會越來越多。每年殖利率 5%，持續再投入 20 年，資產增長遠超過只領不買。這就是複利的威力，時間越長效果越驚人。',
+   tip:'存股最重要的習慣是「不要花掉股息」，把股息當成下一次買股的子彈。時間是你最好的朋友。'},
+  {cat:'fundamental',level:'入門',title:'營收：公司生意好不好做',
+   summary:'營收就是公司這個月「賣了多少錢」。台股每月 10 日公布上個月營收。營收連續成長代表生意越來越好；營收突然衰退，要留意是景氣還是產業出了問題。',
+   tip:'看營收要「和去年同期比」，因為很多產業有季節性。冷氣廠夏天營收高是正常的，不能只和前一個月比。'},
+  {cat:'fundamental',level:'入門',title:'除權除息：股息是怎麼領的？',
+   summary:'除息是公司把「現金股息」分給你，除權是把「股票股利」分給你。除息當天股價會下跌，因為公司資產少了一部分分給你了，這不是虧損。之後股價漲回來叫「填息」。',
+   tip:'買股票前記得查「填息紀錄」，確認過去幾年都能填息成功，這樣才是真的賺到股息，而不是股價跌了補不回來。'},
+  {cat:'fundamental',level:'入門',title:'ROE：老闆幫股東賺錢的效率',
+   summary:'ROE（股東權益報酬率）代表「公司用股東的錢，每年能創造多少報酬」。ROE 20% 代表每投入 100 元，每年賺回 20 元。巴菲特最愛找 ROE 長期超過 15% 的公司。',
+   tip:'ROE 要看連續三到五年的平均，一年特別高可能是偶然，長期穩定才代表公司真的有實力。'},
+  {cat:'fundamental',level:'入門',title:'現金流：獲利是不是真的有錢進來',
+   summary:'損益表上的獲利有時只是帳面數字，還沒有真正收到現金。現金流量表才是確認「錢有沒有真的流進來」的地方。一家公司可以帳面獲利，但客戶都拖著不付款，就可能周轉困難。',
+   tip:'看財報時除了看 EPS，也看一眼「營業活動現金流」是不是正的。EPS 好但現金流是負的，要小心。'},
+  {cat:'fundamental',level:'入門',title:'配股 vs 配息：哪個比較好？',
+   summary:'配息是公司直接把現金給你，你可以自由運用；配股是給你股票，股數增加但每股價值被稀釋。配息感覺更直接，你可以決定要不要再投入。台灣近年越來越多公司改為配現金。',
+   tip:'選存股標的時，優先選「年年配現金、金額穩定或增加」的公司，這代表公司每年都真的有賺到錢。'},
+  {cat:'fundamental',level:'入門',title:'本淨比：買股票像買房子幾折？',
+   summary:'本淨比就像「用幾倍的價格買一棟帳面價值的房子」。本淨比低於 1 代表打折買，聽起來划算，但也可能是公司賺錢能力不好。通常在景氣低谷時才容易出現。',
+   tip:'本淨比低不一定是好事，要確認公司是否有能力持續賺錢，不然只是買到一家便宜的爛公司。'},
+  {cat:'fundamental',level:'入門',title:'什麼是財報四大表？',
+   summary:'公司每季公布四份財務報告：損益表（賺不賺錢）、資產負債表（有哪些家當）、現金流量表（現金夠不夠）、股東權益變動表（股東的錢有沒有增加）。新手先從損益表開始看。',
+   tip:'先記住：EPS 和毛利率在損益表、現金流在現金流量表。這兩個搭配看，已經很夠用了。'},
+  {cat:'fundamental',level:'入門',title:'景氣循環股：反直覺的買賣時機',
+   summary:'景氣循環股（鋼鐵、DRAM、航運）在景氣谷底時本益比很高甚至虧損，反而可能是買點；景氣高峰時本益比極低，反而可能是賣點。和一般成長股的邏輯完全相反，不能用同一個標準判斷。',
+   tip:'循環股要在「大家都覺得沒救了」的時候買，在「大家都說好棒」的時候賣。記住這個反直覺邏輯，才能避開追高殺低。'},
+
+  // ── 技術面 ──
+  {cat:'technical',level:'入門',title:'均線：股票的平均購買成本',
+   summary:'均線就是過去一段時間的平均股價。20 日均線代表這個月買進的人平均花多少錢。股價在均線上方，大多數人都在賺錢，心情好；股價跌破均線，很多人開始虧損，容易想賣。',
+   tip:'最簡單的判斷：股價有沒有在 20 日均線上方？在上方偏多，在下方偏空。雖然簡單，但很實用。'},
+  {cat:'technical',level:'入門',title:'成交量：股票今天有多熱門',
+   summary:'成交量就是今天買賣了多少張股票。量大代表很多人在交易；量縮代表大家在觀望。最重要的規則：股價漲但量也大，才是健康上漲；股價漲但量很小，要小心後繼無力。',
+   tip:'先看量、再看價。量是先行訊號，量開始放大之後股價才會跟著動。量縮的時候適合等待，不用急著進場。'},
+  {cat:'technical',level:'入門',title:'K 線：一根蠟燭看懂四個價格',
+   summary:'每根 K 線記錄了開盤價、收盤價、最高價、最低價。紅色 K 線代表今天收盤比開盤高（漲），黑色 K 線代表收盤比開盤低（跌）。K 線圖就是把每天這四個價格畫出來的圖。',
+   tip:'單看一根 K 線參考價值有限，要連續看幾根觀察趨勢方向。就像天氣預報，一天的資料說不准，連續幾天才能判斷。'},
+  {cat:'technical',level:'入門',title:'支撐與壓力：股票的地板和天花板',
+   summary:'支撐是「股價跌到這個位置後通常止跌反彈」的價位；壓力是「股價漲到這裡後通常被壓回來」的價位。這些通常是過去多次在同一個價位上下震盪形成的記憶。',
+   tip:'找支撐壓力最簡單的方法：看股票過去在哪個價位反覆出現，那個位置就是重要的支撐或壓力，未來再次到達時要特別留意。'},
+  {cat:'technical',level:'入門',title:'黃金交叉：短線買入訊號',
+   summary:'短期均線（如 5 日）向上穿越長期均線（如 20 日），形成「黃金交叉」，通常被視為買入訊號；反過來叫「死亡交叉」，是賣出訊號。這是最基礎的技術面判斷方法之一。',
+   tip:'均線交叉要搭配成交量一起看，放量出現黃金交叉比縮量更可靠，縮量的交叉可能只是假突破。'},
+  {cat:'technical',level:'入門',title:'跳空缺口：隔天突然大漲大跌',
+   summary:'跳空就是今天開盤價直接跳過昨天收盤價，K 線圖上出現一個空缺。向上跳空通常是利多消息；向下跳空通常是利空消息。台股最常在美股大漲大跌的隔天出現跳空。',
+   tip:'開盤前先看美股表現，可以預估台股是否會跳空，心理上有準備就不容易在開盤時做出衝動決定。'},
+  {cat:'technical',level:'入門',title:'週線比日線更穩定',
+   summary:'日 K 線每天都在變動，有時讓你眼花撩亂。週 K 線把五天資料合成一根，過濾短期雜訊，更能看出中期方向。如果你是波段投資人，每週固定看一次週線比每天盯日線更有效。',
+   tip:'養成每週六花五分鐘看週 K 線的習慣，比每天看日線更能做出好判斷，也不容易被短期波動影響情緒。'},
+  {cat:'technical',level:'入門',title:'RSI：超買或超賣的警報器',
+   summary:'RSI 是 0 到 100 的數字，代表最近一段時間買賣力道的比較。超過 70 代表可能超買，低於 30 代表可能超賣。這是判斷短期是否過熱的工具，但不是絕對的買賣訊號。',
+   tip:'RSI 低於 30 不代表馬上要漲，只是提示跌太多可能有反彈機會。要搭配其他訊號一起看，不能單靠 RSI 決定買賣。'},
+
+  // ── 籌碼面 ──
+  {cat:'chips',level:'入門',title:'外資是誰？為什麼這麼重要？',
+   summary:'外資就是外國的大型基金公司、退休基金等，把錢投資到台股。外資佔台股市值約四成，是最大的資金來源。外資持續買進某檔股票，通常代表他們看好；外資一直賣，就要小心。',
+   tip:'台灣證交所每天收盤後公布「外資買賣超」數據，可以到鉅亨網或 Yahoo 股市查詢。養成看外資方向的習慣，比自己亂猜更可靠。'},
+  {cat:'chips',level:'入門',title:'投信：台灣基金公司的操盤動向',
+   summary:'投信就是台灣的基金公司，如元大、富邦等。每季底（3、6、9、12 月）前夕，他們會積極買進持股讓績效好看，這段時間叫「投信作帳行情」。被投信持續買超的個股，短期容易有上漲動力。',
+   tip:'每個月底前後兩週，留意哪些股票被投信連續買超，可能有短波段機會。但作帳結束後就要留意是否有退潮的風險。'},
+  {cat:'chips',level:'入門',title:'三大法人合力買超',
+   summary:'台股三大法人是外資、投信、自營商。三大法人合計買超，代表資金持續流入，是偏多訊號；合計賣超代表資金流出，要小心。外資最重要，代表國際大資金的看法。',
+   tip:'每天去鉅亨網看一眼「三大法人買賣超」，五秒鐘就能掌握法人今天是買還是賣，是很有效率的快速判斷工具。'},
+  {cat:'chips',level:'入門',title:'融資：散戶借錢買股的訊號',
+   summary:'融資是散戶向券商借錢買股票，代表看多。如果股價下跌而融資還在增加，代表散戶越跌越買，一旦撐不住就會被強制賣出，造成股價進一步下跌。這是危險的訊號。',
+   tip:'看一檔股票的「融資餘額」是否持續增加，融資高但股價沒有上漲，要小心籌碼已經太重了，後續可能出現殺盤。'},
+  {cat:'chips',level:'入門',title:'外資持股比例的意義',
+   summary:'外資在某檔股票的持股比例越高，代表越受國際機構認可。台積電外資持股超過 70%，所以外資動向對台積電股價影響特別大。外資突然大幅降低持股，即使公司沒問題，股價也容易因賣壓下跌。',
+   tip:'可以在 Yahoo 股市或 MoneyDJ 查詢個股的外資持股比例，如果發現比例連續幾個月下降，要特別留意原因。'},
+  {cat:'chips',level:'入門',title:'庫藏股：公司自己買自己的股票',
+   summary:'公司宣布「庫藏股」，就是用公司的錢回購自己的股票，代表管理層認為股價被低估了，是護盤行動。宣布庫藏股通常是短線利多，股價容易有支撐。',
+   tip:'看到公司宣布庫藏股時，到公開資訊觀測站確認「執行進度」，真的有在買才算數，只宣布不執行是虛的。'},
+
+  // ── 心理策略 ──
+  {cat:'mindset',level:'入門',title:'存股和短線，要先分清楚',
+   summary:'存股是從一開始就打算長期持有；短線是想賺價差，要積極管理進出場。混淆了才最危險：短線股跌了不肯停損，說自己在「存股」，其實只是不想承認虧損。',
+   tip:'買每一檔股票之前，先問自己：我是打算長期持有，還是短期賺價差？兩種答案對應完全不同的操作方式，要想清楚再買。'},
+  {cat:'mindset',level:'入門',title:'不要追高：大家都在說的時候最危險',
+   summary:'當一檔股票頻繁出現在新聞、朋友都在討論，往往已經漲了一大段。這時進場風險極高，你是最後一批買家。最好的買點通常在「沒人理」的時候，不是「大家都在說」的時候。',
+   tip:'有感興趣的股票先記下來觀察，不要因為怕跟不上就衝動進場。好公司等一個月再買也不遲，但追高買貴了可能要等一年才回本。'},
+  {cat:'mindset',level:'入門',title:'分批買入：不要一次押注',
+   summary:'沒有人能精準猜到最低點。分批買入就是把資金分成幾份，在不同時間點分次進場。就算第一批買了之後繼續跌，後面還有錢可以在更低的位置買，讓整體成本降低。',
+   tip:'設一個簡單計畫：把預計投入的資金分成三批，先買三分之一，再跌 5% 買第二批，再跌 5% 買最後一批。有計畫才不會慌。'},
+  {cat:'mindset',level:'入門',title:'沉沒成本：別被買入成本綁架',
+   summary:'「我買在 100 元，現在剩 70 元，賣了不划算」，這是沉沒成本陷阱。股票不知道你的買入成本，判斷要不要持有，應該看「這家公司現在值不值得持有」，而不是你花了多少錢。',
+   tip:'試著這樣想：如果今天手上是現金，你會選擇買這檔股票嗎？如果答案是「不會」，代表你只是因為怕承認虧損而繼續持有。'},
+  {cat:'mindset',level:'入門',title:'報酬和風險永遠成正比',
+   summary:'「高報酬、零風險」這種事不存在。有人告訴你穩賺不賠，一定有你看不到的風險。高殖利率可能背後是股價一直跌；高利息可能是借款方還不起錢的風險。天下沒有白吃的午餐。',
+   tip:'每次被推薦「穩賺」的投資時，先問一個問題：風險在哪裡？找不到答案，不是沒有風險，是你還沒弄清楚風險在哪裡。'},
+  {cat:'mindset',level:'入門',title:'不懂不要買，真的',
+   summary:'如果你說不清楚這家公司怎麼賺錢、競爭對手是誰、為什麼你看好它，就代表還沒做足功課，不應該進場。聽朋友報明牌就買，是虧錢最快的方法。',
+   tip:'買一檔股票前，試著用三句話解釋：這家公司做什麼、為什麼賺錢、為什麼你看好它。說不出來就先不要買。'},
+  {cat:'mindset',level:'入門',title:'市場下跌時，先冷靜再行動',
+   summary:'市場突然大跌時，很多人的第一反應是「趕快賣掉」，但這往往是最糟糕的時機點。正確做法是先確認：持股公司的基本面有沒有改變？如果沒有，通常不需要賣。',
+   tip:'事先想好「如果我的股票跌了 20%，我會怎麼做」。有預案的人遇到真實下跌時不容易慌，做出的決定也比較理性。'},
+  {cat:'mindset',level:'入門',title:'長期持有的時間魔法',
+   summary:'股市短期充滿雜訊和情緒，但長期來看，好公司的股價終究會反映獲利能力。台灣 0050 過去 20 年年化報酬率約 8 到 10%，只要不在最差的時機點賣出，長期持有幾乎都是賺的。',
+   tip:'問自己：五年後這家公司還在賺錢嗎？如果答案是肯定的，今天的短期波動就只是雜訊，不用太緊張。'},
+  {cat:'mindset',level:'入門',title:'停利：賺到了就要實現',
+   summary:'很多人捨不得賣出上漲的股票，等它繼續漲，結果從大賺等到小賺甚至虧損。停利不是「少賺」，是「把獲利變成真實的錢」。可以設定目標，例如漲了 20% 就賣出一部分。',
+   tip:'停利後的錢可以找下一個機會，讓資金持續流動。守著一檔股票等它繼續漲，不如把錢移到下一個更有機會的標的。'},
+
+  // ── 台股特色 ──
+  {cat:'twstock',level:'入門',title:'台股每天什麼時候可以買賣？',
+   summary:'台股交易時間是週一到週五，早上 9 點到下午 1 點半，共 4.5 小時。最小交易單位是「一張」（1000 股）。漲跌幅限制是 10%，一天最多漲或跌 10%。',
+   tip:'美股盤後（台灣時間深夜到早上）的重大消息，通常在台股隔天開盤時立刻反映。開盤前看一下美股表現，可以有心理準備。'},
+  {cat:'twstock',level:'入門',title:'0050 是什麼？為什麼新手適合？',
+   summary:'0050（元大台灣 50 ETF）追蹤台灣市值前 50 大公司，一張就等於同時買進台積電、鴻海、聯發科等 50 家大公司。不需要選股，風險分散，費用低，年化報酬率約 8 到 10%。',
+   tip:'如果不確定要買哪一檔股票，先買 0050 等於買了半個台灣股市，不用擔心選錯，先累積投資經驗再說。'},
+  {cat:'twstock',level:'入門',title:'台積電為什麼這麼重要？',
+   summary:'台積電（2330）是全球最重要的晶片製造公司，幫蘋果、輝達、AMD 等大廠製造最先進的晶片。它的市值佔台股約 30%，所以台積電漲跌幾乎等於台股大盤的方向。',
+   tip:'台積電每季舉行法說會（約 1、4、7、10 月），公布展望和財務數字，這是影響台股最重要的事件之一，法說會前後台股都會有明顯波動。'},
+  {cat:'twstock',level:'入門',title:'大盤成交量：今天市場熱不熱？',
+   summary:'台股全市場每天成交量超過 3000 億代表市場熱絡；低於 2000 億代表冷清。這是判斷整體市場氣氛最簡單的指標之一，搭配大盤指數一起看效果更好。',
+   tip:'每天開盤後先看大盤成交量，再看持股。大盤量縮時個股也容易沒有表現，量能回來之後行情才容易啟動。'},
+  {cat:'twstock',level:'入門',title:'除息旺季：7 月的台股特色',
+   summary:'台灣大多數上市公司選在 6 到 8 月進行除息，7 月最集中。除息前夕因為有人急著買進想領息，股價容易有一波「除息行情」。除息後股價下跌之後能否「填息」才是關鍵。',
+   tip:'存股族如果看到某檔股票即將除息，可以評估是否提前布局。但要確認這家公司過去幾年的填息紀錄，否則領息不如損失多。'},
+  {cat:'twstock',level:'入門',title:'費城半導體指數：台股的預告器',
+   summary:'美國費城半導體指數（SOX）追蹤全球主要半導體公司，因為台積電、聯發科和這些公司高度相關，SOX 的漲跌通常可以預告隔天台股科技股的方向。',
+   tip:'睡前或早起看一下美國那斯達克和費城半導體指數的表現，就能大概猜到隔天台股科技股會往哪個方向走。'},
+  {cat:'twstock',level:'入門',title:'零股：小資族的入門方式',
+   summary:'台股最小交易單位是一張（1000 股），台積電一張約 90 萬元，一般人難以負擔。零股交易讓你可以只買幾股，例如只買 1 股台積電只需要約 900 元，適合小資族慢慢累積。',
+   tip:'零股交易時間是下午 1 點 40 分到 2 點 30 分。想買零股要記得在這個時間段下單，不然會下單失敗。'},
+  {cat:'twstock',level:'入門',title:'台幣匯率和股市的關係',
+   summary:'外資買台股時需要把美元換成台幣，所以外資大量流入時，台幣會升值，台股也會上漲，兩者常常同步。台幣突然大幅升值，通常代表外資正在積極買進台股。',
+   tip:'注意新台幣兌美元的匯率變化，台幣突然快速升值，可以合理推測外資正在買進，這時候留意大盤和科技股的動向。'},
+  {cat:'twstock',level:'入門',title:'ETF 的費用率：小錢長期差很大',
+   summary:'ETF 每年收取管理費，即費用率。0050 費用率約 0.43%，代表每投入 100 萬元，每年付出 4300 元管理費。費用率越低越好，長期下來省下來的費用也是可觀的複利。',
+   tip:'選 ETF 時，除了看追蹤的指數，也要比較費用率。兩檔追蹤相似指數的 ETF，費用率低的那個長期報酬通常會好一點。'},
+
+  // ── 實戰心法 ──
+  {cat:'tactics',level:'入門',title:'開盤前五分鐘：你該做的事',
+   summary:'每天開盤前，花三分鐘做三件事：（1）看昨晚美股那斯達克漲跌幅；（2）看台幣匯率方向；（3）看你的持股有沒有重大消息（搜尋公司名稱看新聞）。這三件事決定你今天的心態是偏進攻還是偏守備。',
+   tip:'不需要看很多，只看這三個。資訊太多反而干擾判斷。開盤前五分鐘的準備，比盤中盯著數字跳動更有價值。'},
+  {cat:'tactics',level:'入門',title:'近五日成交量能告訴你什麼',
+   summary:'把一檔股票最近五天的成交量連起來看：量能逐日放大代表市場關注度上升，股價容易往上；量能逐日縮小代表市場對它失去興趣，股價容易橫盤或下跌。這叫「量能的趨勢」，比單天的量更有參考意義。',
+   tip:'每天看持股的成交量時，不要只看今天多少，要和前四天比。量能持續放大的個股，往往比量縮的個股更有行情。'},
+  {cat:'tactics',level:'入門',title:'如何判斷一檔股票的底部',
+   summary:'底部通常有幾個特徵：（1）成交量縮小但股價跌幅也縮小；（2）出現「長下影線」的 K 線（開低但收高，代表有人在低點承接）；（3）跌破重要支撐後快速收復。這三個訊號出現越多，底部越可能成立。',
+   tip:'看到底部訊號不要急著全買，先買小量試單，確認股價能站穩再加碼。真正的底部會讓你多買幾次機會，假突破的底部第一批就讓你受傷。'},
+  {cat:'tactics',level:'入門',title:'漲停之後隔天該怎麼辦？',
+   summary:'股票漲停（漲了 10%）之後，隔天有三種可能：繼續漲（強勢股）、開高走低（獲利了結壓力大）、平開震盪（等待方向）。最危險的是追買漲停板，因為你的成本已經是最高點，稍微回跌就套牢。',
+   tip:'持有的股票漲停，隔天不要急著賣也不要追買，先觀察開盤後前 15 分鐘的量和方向再決定。量大開高繼續往上，可以續抱；開高量縮，要小心。'},
+  {cat:'tactics',level:'入門',title:'如何看出一檔股票要開始上漲',
+   summary:'上漲前通常有幾個前兆：（1）股價橫盤整理一段時間後，突然某天放量突破壓力；（2）三大法人開始連續買超；（3）股價站上 20 日均線且均線開始往上彎。三個訊號同時出現，上漲機率大增。',
+   tip:'不需要三個訊號全部出現才買，但出現越多代表把握越高。等待多個訊號確認雖然會錯過一小段漲幅，但也大幅降低買到假突破的風險。'},
+  {cat:'tactics',level:'入門',title:'如何看出一檔股票要開始下跌',
+   summary:'下跌前通常有幾個前兆：（1）股價在高點附近出現「量大但收跌」的 K 線；（2）外資連續幾天賣超；（3）股價跌破 20 日均線且反彈無力。這三個訊號代表賣方力道在增強，要開始警覺。',
+   tip:'持股出現這些訊號時，不需要馬上全賣，但可以先賣出一部分降低風險。如果後續訊號越來越多，再決定是否全出。'},
+  {cat:'tactics',level:'入門',title:'什麼是「洗盤」？主力在做什麼？',
+   summary:'洗盤是主力在正式拉升前，故意讓股價下跌，嚇走意志不堅定的散戶。目的是讓籌碼集中在自己手中。洗盤通常量縮而且跌幅有限，跌破重要支撐後又快速拉回，是典型的洗盤特徵。',
+   tip:'分辨洗盤和真正下跌的方法：洗盤量縮、跌幅有限、快速回到支撐上方；真正下跌量大、跌幅持續擴大、反彈無力。遇到量縮跌幅小的情況，不要輕易被嚇出場。'},
+  {cat:'tactics',level:'入門',title:'開盤前 30 分鐘的重要性',
+   summary:'台股開盤後前 30 分鐘（9:00 到 9:30）是「多空交戰最激烈的時段」，有大量的隔夜掛單在這時成交。這段時間的方向往往代表當天的主要走勢，但也容易出現假動作，新手不建議在這段時間追漲殺跌。',
+   tip:'如果不確定方向，開盤後等待 15 到 30 分鐘讓局勢明朗，再決定是否進場。開盤就追漲殺跌的人，往往是為別人的停利出場提供流動性的那一個。'},
+  {cat:'tactics',level:'入門',title:'如何看一天的 K 線判斷多空',
+   summary:'收盤後看當天的 K 線：長紅 K（漲幅超過 3% 以上的實體）代表多方大勝；長黑 K 代表空方大勝；上下影線長但實體短代表多空激戰未分勝負。收盤的位置越接近當天最高點，今天的多方力道越強。',
+   tip:'不要只看今天漲跌幾趴，要看 K 線的「收盤位置」。同樣是漲 1%，收在最高點和收在最低點附近，明天的走勢暗示完全不同。'},
+  {cat:'tactics',level:'入門',title:'均線糾結代表什麼？',
+   summary:'當股票的 5 日、20 日、60 日均線纏繞在一起（也就是「均線糾結」），代表多空力量相當，市場在等待方向。均線糾結之後往往會出現一波較大的行情，但方向要等突破才能確認。',
+   tip:'看到均線糾結的股票，先不要急著進場，等它選擇方向後，以收盤價突破上方均線（放量）為買入訊號，跌破為觀望訊號。'},
+  {cat:'tactics',level:'入門',title:'量價背離：最危險的警訊',
+   summary:'量價背離是指「股價上漲但成交量卻在縮小」，也就是漲得越來越少人追捧。這通常代表上漲動能在衰減，後繼無力。如果同時出現在高點附近，是典型的準備回跌警訊。',
+   tip:'每次股票漲得很開心的時候，反而要檢查成交量有沒有跟上。量價同步才是健康的上漲，量縮漲要特別小心，不要被表面的上漲迷惑。'},
+  {cat:'tactics',level:'入門',title:'看盤的正確心態：不要分心',
+   summary:'很多散戶喜歡一邊工作一邊看盤，結果既沒有好好工作，也沒有做出好的投資決策。真正有效的看盤應該是：收盤後花 20 分鐘認真分析，而不是盤中不斷刷新股價。盤中情緒化操作是最大的虧損來源。',
+   tip:'如果你不是全職投資人，建議把看盤時間固定在收盤後。設定停損停利條件單，讓系統幫你執行，不要靠肉眼盯盤做即時決策。'},
+  {cat:'tactics',level:'入門',title:'如何判斷支撐是否有效',
+   summary:'判斷支撐是否有效，要看「量」。股價跌到支撐附近時，如果出現量縮且跌幅停止擴大，代表賣壓減輕，支撐有效；如果股價跌到支撐附近還是放量下跌，代表支撐被攻破，這條支撐已失效。',
+   tip:'每次看到持股接近支撐時，注意成交量的變化比看股價本身更重要。量縮守住支撐是好事，量大破支撐是該認真考慮減碼的時候。'},
+  {cat:'tactics',level:'入門',title:'什麼叫「籌碼乾淨」？',
+   summary:'籌碼乾淨是指「持有這檔股票的人，大部分都在獲利或成本相近」。籌碼乾淨的股票，不容易在上漲時遇到大量賣壓（因為沒有太多套牢的人急著解套）。相反，籌碼凌亂代表高點被套的人很多，上漲容易遇阻。',
+   tip:'判斷籌碼是否乾淨，可以看「集保戶數」的變化。如果股東人數減少（籌碼集中）而股價橫盤，通常代表主力正在低調累積，後續可能有行情。'},
+  {cat:'tactics',level:'入門',title:'如何使用停損條件單',
+   summary:'條件單就是預先設定好「如果股價跌到 XX 元就自動賣出」，讓系統幫你執行停損，不需要靠自己盯盤。這樣可以避免「心軟捨不得賣」的心理弱點，是保護資金最有效的方法之一。',
+   tip:'買入一檔股票時，同步設定停損條件單。停損點可以設在重要支撐下方 1 到 2%，一旦跌破就自動出場，不要等到心情好才想起來要設停損。'},
+  {cat:'tactics',level:'入門',title:'什麼是「主力出貨」的跡象？',
+   summary:'主力出貨時通常有幾個特徵：（1）在高點附近突然出現放量但收跌的 K 線；（2）利多消息頻繁出現（主力在利多時出貨）；（3）外資或大戶持股比例悄悄減少。這些是股票即將回調的早期警訊。',
+   tip:'「利多頻繁出現但股價不漲」是最典型的主力出貨訊號。好消息一直出、股價卻不動或小跌，代表有人在借助利多偷偷賣出，你是買家。'},
+  {cat:'tactics',level:'入門',title:'股票 K 線的上下影線代表什麼',
+   summary:'上影線長（K 線上方的鬚）代表今天漲上去但被賣回來了，賣方力道強；下影線長代表今天跌下去但被撐回來了，買方力道強。一根上影線很長的 K 線出現在高點，往往是警訊；下影線很長出現在低點，往往是止跌訊號。',
+   tip:'下次看 K 線圖時，特別注意上下影線的長度。影線長代表有激烈的多空交戰，而最後「收盤的位置」告訴你誰贏了今天的戰鬥。'},
+  {cat:'tactics',level:'入門',title:'如何判斷一個股票的「基底」穩不穩',
+   summary:'「基底」是指股票在一段時間內的整理區間。穩固的基底特徵：整理時間越長越好（至少幾週）、量縮（說明浮額在消化）、每次跌下去都能守住同一個低點。整理越久越紮實，突破後漲幅往往越大。',
+   tip:'找基底穩固的股票，看它在低點的「支撐次數」。同一個低點被測試三次以上還守住，這個基底就非常紮實，是可以信賴的布局位置。'},
+  {cat:'tactics',level:'入門',title:'收盤後應該做的三件事',
+   summary:'每天收盤後花 20 分鐘做三件事：（1）對照每檔持股的 K 線，確認今天的量價關係；（2）看三大法人今天的買賣超方向；（3）紀錄一句話：今天市場的氣氛是多還是空？這 20 分鐘比盤中盯盤三小時更有價值。',
+   tip:'建立自己的收盤後固定流程，久了會形成「盤感」——那種說不清楚但看一眼就知道今天對不對的直覺，其實是系統化觀察累積出來的。'},
+  {cat:'tactics',level:'入門',title:'均線糾結後的突破，怎麼確認真假',
+   summary:'均線糾結後出現突破，要確認是否真突破的方法：真突破通常伴隨「成交量大增（超過近五日均量的 1.5 倍以上）」且「收盤站穩在突破位置上方」。假突破則量小、且當天收盤回到原來的位置。',
+   tip:'不確定是真是假時，等到「收盤確認」再行動。很多人搶在盤中突破時買進，結果收盤又回去了。多等幾個小時，少虧很多冤枉錢。'},
+  {cat:'tactics',level:'入門',title:'「量先價行」：量是價的先行指標',
+   summary:'「量先價行」是技術分析中的重要概念，意思是成交量的變化往往比股價早一步反映市場動向。當一檔股票在低點開始悄悄放量，但股價還沒動，這往往是有人在低調布局的訊號。',
+   tip:'每天看盤的重點順序：先看大盤量能，再看個股量能，最後才看股價。量先出現異常，代表背後有故事，值得深入關注。'},
+  {cat:'tactics',level:'入門',title:'新手最容易犯的五個看盤錯誤',
+   summary:'（1）只看股價漲跌，不看量；（2）看到帳面虧損就心慌，急著停損在最低點；（3）看到帳面獲利就急著賣，賣在行情剛開始；（4）一天看盤幾十次，每次都焦慮；（5）把消息面（新聞）和技術面（K 線）混著看，沒有系統。',
+   tip:'先把這五個錯誤都記起來，每次想操作之前問自己「我現在有沒有在犯這些錯誤？」。能避開這五個，你已經贏過大部分散戶了。'},
+  {cat:'tactics',level:'入門',title:'如何設定合理的停損點',
+   summary:'停損點不應該隨便設，要有邏輯依據。最常用的方法：設在「關鍵支撐下方 2 到 3%」。例如股票在 60 元支撐附近買入，就把停損設在 58 元。一旦收盤跌破 58 元，就執行停損，不要等明天看看。',
+   tip:'停損設太近（例如跌 1% 就停損）容易被正常波動打到；設太遠（例如跌 20% 才停損）等於沒有停損。2 到 5% 是大多數情況下比較合理的停損範圍。'},
+  {cat:'tactics',level:'入門',title:'什麼時候「不要操作」也是一種策略',
+   summary:'市場在以下情況時，最好的策略是「什麼都不做」：大盤方向不明確時、你對某檔股票沒有足夠的把握時、剛剛做了一筆虧損的交易之後（情緒還沒平復）。不操作不等於放棄，而是等待更好的機會。',
+   tip:'每個月可以問自己：「我這個月有沒有做了不該做的交易？」很多投資人的主要虧損來源不是做對但太早賣，而是做了不該做的那一筆。'},
+];
+
+// ═══════════════════════════════════════
+// 詞彙快查資料庫（70 條）
+// ═══════════════════════════════════════
+const GLOSSARY = [
+  {term:'本益比',def:'股價除以每股盈餘（EPS）的比值。代表你花多少錢，買公司每年賺一塊錢的獲利。本益比 15 倍代表用 15 元買到每年賺 1 元的公司。'},
+  {term:'EPS 每股盈餘',def:'公司稅後淨利除以流通股數，代表每一股賺了多少錢。EPS 越高、越穩定，通常代表公司越賺錢。'},
+  {term:'殖利率',def:'每股股息除以股價的百分比。殖利率 5% 代表買 100 元的股票，每年可以領 5 元股息。'},
+  {term:'毛利率',def:'（營收 - 直接成本）÷ 營收 × 100%。代表賣出商品後，扣掉生產成本還剩下幾趴。毛利率越高代表產品競爭力越強。'},
+  {term:'ROE 股東權益報酬率',def:'公司每年用股東的錢創造多少報酬。ROE 20% 代表每投入 100 元，每年賺回 20 元。巴菲特很重視這個數字。'},
+  {term:'除息',def:'公司將現金股息分配給股東當天，股價會依配息金額下調。除息後若股價漲回原來的位置，稱為「填息成功」。'},
+  {term:'除權',def:'公司將股票股利分配給股東當天，持股數增加但每股面值被稀釋。和除息類似，之後漲回去叫「填權」。'},
+  {term:'填息',def:'除息後股價跌下去，之後又漲回到除息前的價位，代表股息真的賺到了，叫「填息成功」。'},
+  {term:'均線',def:'過去一段時間的平均股價。5 日均線是近一週的平均成本，20 日是近一個月，60 日是近一季，240 日是近一年。'},
+  {term:'K 線',def:'每根K線記錄當天（或一段時間）的開盤、收盤、最高、最低價。紅色（陽線）代表漲，黑色（陰線）代表跌。'},
+  {term:'成交量',def:'一段時間內買賣了多少張股票的數量。量大代表市場熱絡，量縮代表觀望。量是判斷股票動能的重要指標。'},
+  {term:'支撐',def:'股價跌到某個位置後，通常會止跌反彈的價位。就像地板，股價跌下去會被撐住。'},
+  {term:'壓力',def:'股價漲到某個位置後，通常會被壓回來的價位。就像天花板，股價漲上去會遇到阻力。'},
+  {term:'黃金交叉',def:'短期均線（如 5 日）向上穿越長期均線（如 20 日），通常被視為買入訊號。'},
+  {term:'死亡交叉',def:'短期均線（如 5 日）向下穿越長期均線（如 20 日），通常被視為賣出訊號。'},
+  {term:'外資',def:'外國機構投資人，如外國基金公司、退休基金等。外資佔台股市值約四成，是最大的資金來源。'},
+  {term:'投信',def:'台灣的基金公司，如元大、富邦等。他們管理一般投資人的資金，透過基金形式投資台股。'},
+  {term:'自營商',def:'券商用自己的錢操盤的部門。自營商行為較複雜，有時是在對沖選擇權部位，不能單純跟單。'},
+  {term:'三大法人',def:'外資、投信、自營商的合稱。三大法人每天的買賣超數據是判斷市場資金流向的重要指標。'},
+  {term:'融資',def:'散戶向券商借錢買股票，代表看多。融資餘額越高，代表散戶借越多錢押在股票上，風險越高。'},
+  {term:'融券',def:'向券商借股票來賣出，代表看空（做空）。融券賣出後若股票上漲，空方需要以更高的價格買回，造成虧損。'},
+  {term:'法說會',def:'法人說明會，上市公司每季舉行，向機構投資人說明財務表現和未來展望。法說會的展望是影響股價的重要事件。'},
+  {term:'ETF',def:'指數型基金，追蹤某個指數的一籃子股票。如 0050 追蹤台灣前 50 大公司，一張等於買進多家公司。費用低、風險分散。'},
+  {term:'漲停',def:'台股每天最多漲 10%，達到上限叫漲停。漲停板代表當天買方力道極強，賣方極少。'},
+  {term:'跌停',def:'台股每天最多跌 10%，達到下限叫跌停。跌停板代表當天賣方力道極強，買方極少。'},
+  {term:'開盤價',def:'每天股市開盤時第一筆成交的價格。'},
+  {term:'收盤價',def:'每天股市收盤時最後一筆成交的價格。最常被用來計算漲跌幅和均線。'},
+  {term:'最高價',def:'一天中成交的最高價格，K 線圖中的最高點。'},
+  {term:'最低價',def:'一天中成交的最低價格，K 線圖中的最低點。'},
+  {term:'上影線',def:'K 線圖中，實體上方延伸出去的細線。代表今天漲上去但被賣方壓下來了。上影線越長，高點賣壓越強。'},
+  {term:'下影線',def:'K 線圖中，實體下方延伸出去的細線。代表今天跌下去但被買方撐回來了。下影線越長，低點買盤越強。'},
+  {term:'跳空',def:'今天開盤價直接跳過昨天收盤價，K 線圖上出現空缺。向上跳空通常是利多，向下跳空通常是利空。'},
+  {term:'RSI',def:'相對強弱指標，數值 0 到 100。超過 70 代表可能超買，低於 30 代表可能超賣。是判斷短期是否過熱的工具。'},
+  {term:'MACD',def:'由快線、慢線和柱狀圖組成的技術指標。快線向上穿越慢線叫黃金交叉（買訊），反之叫死亡交叉（賣訊）。'},
+  {term:'籌碼',def:'指市場上「誰持有這檔股票」。籌碼集中在少數大戶手中通常是偏多訊號；籌碼分散在大量散戶手中則容易賣壓沉重。'},
+  {term:'主力',def:'持有大量某檔股票的特定大戶或機構，有能力推動股價漲跌。主力的進出動向是籌碼面分析的重點。'},
+  {term:'洗盤',def:'主力在正式拉升前，故意讓股價下跌嚇走意志不堅定的散戶，目的是讓籌碼集中在自己手中。'},
+  {term:'庫藏股',def:'公司用自己的資金回購自己的股票。通常代表管理層認為股價被低估，是短線利多訊號。'},
+  {term:'量縮',def:'成交量比前幾天明顯減少。量縮可能是市場觀望，也可能是籌碼在消化整理，需要配合股價判斷意義。'},
+  {term:'量增',def:'成交量比前幾天明顯增加。量增代表市場參與度提高，如果同時股價上漲，是健康的買入訊號。'},
+  {term:'量價背離',def:'股價上漲但成交量縮小，代表上漲動能衰減；或股價下跌但成交量縮小，代表賣壓減輕。是重要的趨勢轉折警訊。'},
+  {term:'費城半導體指數 SOX',def:'美國追蹤全球主要半導體公司的指數，因為台積電、聯發科等台廠和這些公司高度相關，SOX 的漲跌通常預告台股科技股方向。'},
+  {term:'大盤',def:'台灣加權股價指數，代表所有上市公司依市值加權計算的整體表現。是判斷整個台股強弱的核心指標。'},
+  {term:'加權指數',def:'台灣證券交易所發布的整體市場指數，依各公司市值計算加權。台積電因為市值最大，對加權指數影響最深。'},
+  {term:'零股',def:'少於一張（1000股）的股票交易。台股零股交易時間是下午 1:40 到 2:30，讓小資族可以低門檻投資高價股。'},
+  {term:'停損',def:'設定一個虧損上限，一旦股價跌到這個位置就賣出，避免虧損持續擴大。停損是保護資金最重要的風險管理工具。'},
+  {term:'停利',def:'設定一個獲利目標，一旦股價漲到這個位置就賣出，讓獲利落袋為安。避免「從大賺變小賺」的情況。'},
+  {term:'條件單',def:'預先設定「當股價達到某個條件時，自動執行買賣」的委託方式。可以用來設定自動停損停利，不需要一直盯盤。'},
+  {term:'布林通道',def:'由 20 日均線（中軌）加上兩個標準差構成的上下通道。股價觸及上軌可能超買，觸及下軌可能超賣，通道縮窄代表即將有大行情。'},
+  {term:'均線糾結',def:'當短中長期均線纏繞在一起，代表多空力量相當，市場等待方向。均線糾結之後往往會出現較大的行情。'},
+  {term:'基底',def:'股票在一段時間內橫盤整理的區間。基底越長越紮實，突破後的漲幅往往越大，是布局的重要參考。'},
+  {term:'財報季',def:'上市公司每季公布財務報告的時期，台灣主要在 3、5、8、11 月。財報季時股票波動通常較大，EPS 優於預期股價漲，差於預期股價跌。'},
+  {term:'法人作帳',def:'基金等機構在每季底前積極操作持股，讓績效好看的行為。投信作帳行情通常在每季最後兩週出現。'},
+  {term:'上市',def:'在台灣證券交易所掛牌交易的公司，通常是規模較大、較成熟的公司。'},
+  {term:'上櫃',def:'在台灣證券櫃檯買賣中心掛牌交易的公司，通常是中型公司，規模比上市公司稍小。'},
+  {term:'興櫃',def:'尚未正式掛牌的公司在興櫃市場交易，類似預備區。流動性差、資訊透明度低，風險比上市上櫃高很多。'},
+  {term:'殖利率陷阱',def:'某些股票殖利率看起來很高，但其實是因為股價長期下跌造成的。殖利率高但股價一直跌，領到的股息遠少於資本損失。'},
+  {term:'複利',def:'利滾利的效果。每年的獲利再投入，創造下一年的更多獲利。時間越長，複利的效果越驚人，是長期投資最重要的概念。'},
+  {term:'資本利得',def:'買低賣高賺到的差價。例如 50 元買入，60 元賣出，賺到 10 元就是資本利得，和股息收益是不同的兩種報酬來源。'},
+  {term:'股息',def:'公司把部分獲利分配給股東的現金。領取股息不需要賣出股票，是長期持有的額外報酬。'},
+  {term:'市值',def:'公司股價乘以流通股數，代表市場認為這家公司值多少錢。市值越大的公司對大盤指數的影響越大。'},
+  {term:'本業獲利',def:'公司靠本身業務賺到的獲利，排除業外收益（如賣土地、投資收益）。本業獲利穩定才代表公司有真實的競爭力。'},
+  {term:'業外收益',def:'公司除了本業以外的收入，如賣房、投資股票獲利等。業外收益不穩定，不能長期依賴。'},
+  {term:'護城河',def:'巴菲特提出的概念，指公司讓競爭對手難以超越的持久競爭優勢，可能是品牌、專利、規模或轉換成本。護城河越深，獲利越持久。'},
+  {term:'買賣超',def:'三大法人今天買進和賣出的差額。買超代表買進多於賣出（看多）；賣超代表賣出多於買進（看空）。'},
+  {term:'集保戶數',def:'持有某檔股票的股東人數。股東人數減少（籌碼集中）通常是偏多訊號；人數增加（籌碼分散）需要小心。'},
+  {term:'年化報酬率',def:'把不同時間長度的投資報酬換算成每年的報酬率，方便比較。例如三年總報酬 33%，年化報酬率約 10%。'},
+  {term:'費用率',def:'ETF 每年收取的管理費比例。0050 費用率約 0.43%，長期持有時費用率低的 ETF 報酬會比較好。'},
+  {term:'分散投資',def:'把資金分散在多檔不同產業的股票，降低單一個股出問題時的影響。俗話說「不要把雞蛋放在同一個籃子裡」。'},
+  {term:'填息紀錄',def:'一家公司過去除息之後，股價是否都能填息成功的歷史紀錄。填息紀錄穩定是存股族選股的重要標準之一。'},
+];
+
+// ═══════════════════════════════════════
+// 狀態管理
+// ═══════════════════════════════════════
+let savedNotes   = JSON.parse(localStorage.getItem('sn_notes')    || '[]');
+let streak       = parseInt(localStorage.getItem('sn_streak')     || '0');
+let lastDate     = localStorage.getItem('sn_lastDate')            || '';
+let seenIndices  = JSON.parse(localStorage.getItem('sn_seen')     || '[]');
+let todayCards   = JSON.parse(localStorage.getItem('sn_today')    || '[]');
+let todayDate    = localStorage.getItem('sn_todayDate')           || '';
+
+function getTodayStr(){ return new Date().toISOString().slice(0,10); }
+function getYesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+function formatDate(str){ const d=new Date(str+'T00:00:00'); return `${d.getMonth()+1}月${d.getDate()}日`; }
+
+function init(){
+  document.getElementById('dateDisplay').textContent = formatDate(getTodayStr());
+  const today = getTodayStr();
+  if(lastDate !== today && lastDate !== getYesterdayStr() && lastDate !== '') streak = 0;
+  document.getElementById('streakNum').textContent = streak;
+  updateProgress();
+  renderNotes();
+  if(todayDate === today && todayCards.length === 5){
+    renderCards(todayCards.map(i => DB[i]));
+  }
+}
+
+function updateProgress(){
+  const total = DB.length;
+  const seen  = seenIndices.length;
+  document.getElementById('progressCount').textContent = `${seen} / ${total}`;
+  document.getElementById('progressFill').style.width  = `${Math.round(seen/total*100)}%`;
+}
+
+function drawCards(){
+  const today  = getTodayStr();
+  let resetDone = false;
+
+  // 如果今天已抽過就重抽（讓使用者可以重新抽）
+  // 先從未看過的池子中抽 5 張
+  let pool = DB.map((_,i)=>i).filter(i => !seenIndices.includes(i));
+
+  // 若剩餘不足 5 張，全部重置
+  if(pool.length < 5){
+    seenIndices = [];
+    localStorage.setItem('sn_seen', '[]');
+    pool = DB.map((_,i)=>i);
+    resetDone = true;
+  }
+
+  // 儘量讓五張來自不同類別
+  const cats = Object.keys(CAT_CONFIG);
+  let picked = [];
+  let shuffledCats = [...cats].sort(()=>Math.random()-.5);
+
+  for(let cat of shuffledCats){
+    if(picked.length >= 5) break;
+    const catPool = pool.filter(i => DB[i].cat === cat && !picked.includes(i));
+    if(catPool.length > 0){
+      picked.push(catPool[Math.floor(Math.random()*catPool.length)]);
+    }
+  }
+  // 若某類別不夠，從剩餘池子補足
+  const remaining = pool.filter(i => !picked.includes(i)).sort(()=>Math.random()-.5);
+  while(picked.length < 5 && remaining.length > 0){
+    picked.push(remaining.shift());
+  }
+
+  // 更新已看
+  seenIndices = [...new Set([...seenIndices, ...picked])];
+  localStorage.setItem('sn_seen', JSON.stringify(seenIndices));
+
+  // 儲存今日卡片
+  todayCards = picked;
+  todayDate  = today;
+  localStorage.setItem('sn_today',     JSON.stringify(todayCards));
+  localStorage.setItem('sn_todayDate', todayDate);
+
+  // 更新連勝
+  if(lastDate !== today){
+    streak = (lastDate === getYesterdayStr()) ? streak+1 : 1;
+    lastDate = today;
+    localStorage.setItem('sn_streak',  streak);
+    localStorage.setItem('sn_lastDate',today);
+    document.getElementById('streakNum').textContent = streak;
+  }
+
+  updateProgress();
+
+  if(resetDone){
+    document.getElementById('resetNotice').style.display = 'block';
+    setTimeout(()=>{ document.getElementById('resetNotice').style.display='none'; }, 5000);
+  }
+
+  renderCards(picked.map(i => DB[i]));
+}
+
+function renderCards(items){
+  const c = document.getElementById('cardsContainer');
+  c.innerHTML = '';
+  items.forEach((item, i) => {
+    const cfg = CAT_CONFIG[item.cat] || CAT_CONFIG.fundamental;
+    const isSaved = savedNotes.some(n => n.title === item.title);
+    const levelClass = item.level === '進階' ? 'tag-advanced' : 'tag-beginner';
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-num">0${i+1}</span>
+        <div class="cat-dot" style="background:${cfg.dot}"></div>
+        <div class="card-tags">
+          <span class="tag ${cfg.tagClass}">${cfg.label}</span>
+          <span class="tag ${levelClass}">${item.level}</span>
+        </div>
+        <div class="card-title">${item.title}</div>
+        <div class="card-right">
+          <button class="btn-save ${isSaved?'saved':''}" onclick="event.stopPropagation();toggleSave(this,'${item.title.replace(/'/g,"\\'")}')">🔖</button>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-summary">${item.summary}</div>
+        <div class="action-tip"><strong>💡 實用提醒</strong>${item.tip}</div>
+      </div>`;
+    c.appendChild(div);
+  });
+  window._shownItems = items;
+}
+
+function toggleCard(h){ h.closest('.card').classList.toggle('open'); }
+
+function toggleSave(btn, title){
+  const item = window._shownItems.find(i => i.title === title);
+  if(!item) return;
+  const idx = savedNotes.findIndex(n => n.title === title);
+  if(idx >= 0){ savedNotes.splice(idx,1); btn.classList.remove('saved'); }
+  else{ savedNotes.unshift({ title:item.title, summary:item.summary, cat:item.cat, date:getTodayStr() }); btn.classList.add('saved'); }
+  localStorage.setItem('sn_notes', JSON.stringify(savedNotes));
+  renderNotes();
+}
+
+function toggleNotes(){ document.getElementById('notesPanel').classList.toggle('open'); }
+
+function renderNotes(){
+  const list = document.getElementById('notesList');
+  if(!savedNotes.length){ list.innerHTML='<div class="empty-notes">還沒有收藏的要點<br>點擊卡片上的 🔖 來收藏</div>'; return; }
+  list.innerHTML = savedNotes.map((n,i) => {
+    const cfg = CAT_CONFIG[n.cat] || CAT_CONFIG.fundamental;
+    return `<div class="note-item">
+      <div class="note-dot" style="background:${cfg.dot}"></div>
+      <div class="note-content">
+        <div class="note-text"><strong>${n.title}</strong><br>${n.summary}</div>
+        <div class="note-meta">
+          <span class="note-date">${formatDate(n.date)} · ${cfg.label}</span>
+          <button class="btn-del" onclick="deleteNote(${i})">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteNote(i){
+  savedNotes.splice(i,1);
+  localStorage.setItem('sn_notes', JSON.stringify(savedNotes));
+  renderNotes();
+}
+
+// ── 詞彙快查 ──
+function searchGlossary(q){
+  const results = document.getElementById('glossaryResults');
+  const hint    = document.querySelector('.glossary-hint');
+  q = q.trim();
+  if(!q){ results.innerHTML=''; hint.style.display='block'; return; }
+  hint.style.display = 'none';
+  const matches = GLOSSARY.filter(g =>
+    g.term.includes(q) || g.def.includes(q)
+  ).slice(0, 6);
+  if(!matches.length){
+    results.innerHTML = '<div class="glossary-empty">找不到相關名詞，試試其他關鍵字</div>';
+    return;
+  }
+  results.innerHTML = matches.map(g => `
+    <div class="glossary-card">
+      <div class="glossary-term">${g.term}</div>
+      <div class="glossary-def">${g.def}</div>
+    </div>`).join('');
+}
+
+init();
+</script>
+</body>
+</html>
